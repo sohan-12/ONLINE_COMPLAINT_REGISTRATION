@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import ChatWindow from '../common/ChatWindow';
-import { CheckCircle2, Clock, ShieldAlert, Phone, MapPin, User, MessageCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Shield, Phone, MapPin, User, MessageCircle } from 'lucide-react';
 
 const AgentHome = () => {
   const [complaints, setComplaints] = useState([]);

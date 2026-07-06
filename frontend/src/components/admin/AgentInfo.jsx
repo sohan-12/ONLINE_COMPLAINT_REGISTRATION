@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, UserCheck, ShieldAlert, Award, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, UserCheck, Shield, Award, Phone, Mail } from 'lucide-react';
 
 const AgentInfo = () => {
   const [agents, setAgents] = useState([]);

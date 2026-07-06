@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import ChatWindow from '../common/ChatWindow';
-import { ArrowLeft, Clock, ShieldAlert, CheckCircle2, User, Phone, MapPin } from 'lucide-react';
+import { ArrowLeft, Clock, Shield, CheckCircle2, User, Phone, MapPin } from 'lucide-react';
 
 const Status = () => {
   const { id } = useParams();
@@ -184,7 +184,7 @@ const Status = () => {
                 boxShadow: timeline.isCompleted ? (timeline.isRejected ? '0 0 10px rgba(255,78,80,0.4)' : '0 0 10px rgba(0,255,135,0.4)') : 'none',
                 transition: 'all 0.5s ease'
               }}>
-                {timeline.isRejected ? <ShieldAlert size={20} /> : <CheckCircle2 size={20} />}
+                {timeline.isRejected ? <Shield size={20} /> : <CheckCircle2 size={20} />}
               </div>
               <span style={{
                 fontSize: '0.85rem',

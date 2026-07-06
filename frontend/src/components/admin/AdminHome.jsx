@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import Accordion from './Accordion';
-import { Shield, Users, Radio, FileText, CheckCircle2, Clock, ShieldAlert, Award, MapPin } from 'lucide-react';
+import { Shield, Users, Radio, FileText, CheckCircle2, Clock, Award, MapPin } from 'lucide-react';
 
 const AdminHome = () => {
   const [complaints, setComplaints] = useState([]);
