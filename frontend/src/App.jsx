@@ -68,6 +68,23 @@ const Navbar = () => {
             <HomeIcon size={16} /> Home
           </Link>
         </li>
+        <li>
+          <Link to="/admin" className="nav-link" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            background: 'rgba(127, 0, 255, 0.1)',
+            color: 'var(--accent-violet)',
+            border: '1px solid rgba(127, 0, 255, 0.2)',
+            padding: '0.35rem 0.85rem',
+            borderRadius: '50px',
+            fontSize: '0.85rem',
+            fontWeight: '700',
+            transition: 'var(--transition)'
+          }}>
+            <ShieldAlert size={14} /> Admin Portal
+          </Link>
+        </li>
         
         {user && (
           <>
