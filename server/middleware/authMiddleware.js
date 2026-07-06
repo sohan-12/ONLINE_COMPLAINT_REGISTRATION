@@ -38,9 +38,9 @@ const protect = async (req, res, next) => {
 // Grant access to specific roles (user_type)
 const authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.user_type)) {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `User role '${req.user ? req.user.user_type : 'guest'}' is not authorized to access this route`,
+        message: `User role '${req.user ? req.user.role : 'guest'}' is not authorized to access this route`,
       });
     }
     next();

@@ -1,5 +1,5 @@
 const Complaint = require('../models/Complaint');
-const Assignment = require('../models/Assignment');
+const AssignedComplaint = require('../models/AssignedComplaint');
 const User = require('../models/User');
 const Message = require('../models/Message');
 
@@ -9,7 +9,7 @@ const Message = require('../models/Message');
 
 // @desc    Lodge a new complaint
 // @route   POST /api/complaints
-// @access  Private (User)
+// @access  Private (Ordinary)
 const lodgeComplaint = async (req, res, next) => {
   try {
     const { name, address, city, state, pincode, comment } = req.body;
@@ -19,9 +19,9 @@ const lodgeComplaint = async (req, res, next) => {
       address,
       city,
       state,
-      pincode,
+      pincode: Number(pincode),
       comment,
-      user: req.user.id,
+      userId: req.user.id,
       status: 'Pending',
     });
 
@@ -33,10 +33,10 @@ const lodgeComplaint = async (req, res, next) => {
 
 // @desc    Get all complaints lodged by the logged-in citizen
 // @route   GET /api/complaints/my
-// @access  Private (User)
+// @access  Private (Ordinary)
 const getMyComplaints = async (req, res, next) => {
   try {
-    const complaints = await Complaint.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const complaints = await Complaint.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.json({ success: true, count: complaints.length, data: complaints });
   } catch (error) {
     next(error);
@@ -53,14 +53,14 @@ const getMyComplaints = async (req, res, next) => {
 const getAssignedComplaints = async (req, res, next) => {
   try {
     // Find all assignments for this agent
-    const assignments = await Assignment.find({ user_id: req.user.id }).populate('complaint_id');
+    const assignments = await AssignedComplaint.find({ agentId: req.user.id }).populate('complaintId');
     
     // Extract and return the complaints
     const complaints = assignments
-      .filter(assign => assign.complaint_id !== null)
+      .filter(assign => assign.complaintId !== null)
       .map(assign => {
         // Attach the assignment ID and assignment status to the complaint object for front-end convenience
-        const compObj = assign.complaint_id.toObject();
+        const compObj = assign.complaintId.toObject();
         compObj.assignmentId = assign._id;
         compObj.assignmentStatus = assign.status;
         return compObj;
@@ -82,20 +82,20 @@ const getAssignedComplaints = async (req, res, next) => {
 const getAllComplaints = async (req, res, next) => {
   try {
     const complaints = await Complaint.find()
-      .populate('user', 'name email ph_no')
+      .populate('userId', 'name email phone')
       .sort({ createdAt: -1 });
 
     // Look up assignments for each complaint
     const complaintsWithAgents = await Promise.all(
       complaints.map(async (comp) => {
-        const assignment = await Assignment.findOne({ complaint_id: comp._id }).populate('user_id', 'name email ph_no');
+        const assignment = await AssignedComplaint.findOne({ complaintId: comp._id }).populate('agentId', 'name email phone');
         const compObj = comp.toObject();
         if (assignment) {
           compObj.assignedAgent = {
-            id: assignment.user_id ? assignment.user_id._id : null,
-            name: assignment.agent,
-            email: assignment.user_id ? assignment.user_id.email : '',
-            ph_no: assignment.user_id ? assignment.user_id.ph_no : '',
+            id: assignment.agentId ? assignment.agentId._id : null,
+            name: assignment.agentName,
+            email: assignment.agentId ? assignment.agentId.email : '',
+            phone: assignment.agentId ? assignment.agentId.phone : '',
             assignmentStatus: assignment.status,
           };
         } else {
@@ -127,25 +127,25 @@ const assignComplaint = async (req, res, next) => {
 
     // Verify agent exists
     const agentUser = await User.findById(agentUserId);
-    if (!agentUser || agentUser.user_type !== 'agent') {
+    if (!agentUser || agentUser.role !== 'Agent') {
       return res.status(400).json({ message: 'Selected user is not a valid Agent' });
     }
 
     // Check if already assigned
-    let assignment = await Assignment.findOne({ complaint_id: complaintId });
+    let assignment = await AssignedComplaint.findOne({ complaintId: complaintId });
 
     if (assignment) {
       // Re-assign
-      assignment.user_id = agentUserId;
-      assignment.agent = agentUser.name;
+      assignment.agentId = agentUserId;
+      assignment.agentName = agentUser.name;
       assignment.status = 'Assigned';
       await assignment.save();
     } else {
       // Create new assignment
-      assignment = await Assignment.create({
-        user_id: agentUserId,
-        complaint_id: complaintId,
-        agent: agentUser.name,
+      assignment = await AssignedComplaint.create({
+        agentId: agentUserId,
+        complaintId: complaintId,
+        agentName: agentUser.name,
         status: 'Assigned',
       });
     }
@@ -165,7 +165,7 @@ const assignComplaint = async (req, res, next) => {
 // @access  Private (Admin)
 const getAllAgents = async (req, res, next) => {
   try {
-    const agents = await User.find({ user_type: 'agent' }).sort({ createdAt: -1 });
+    const agents = await User.find({ role: 'Agent' }).sort({ createdAt: -1 });
     res.json({ success: true, count: agents.length, data: agents });
   } catch (error) {
     next(error);
@@ -178,7 +178,7 @@ const getAllAgents = async (req, res, next) => {
 const approveAgent = async (req, res, next) => {
   try {
     const agent = await User.findById(req.params.id);
-    if (!agent || agent.user_type !== 'agent') {
+    if (!agent || agent.role !== 'Agent') {
       return res.status(404).json({ message: 'Agent not found' });
     }
 
@@ -200,7 +200,7 @@ const approveAgent = async (req, res, next) => {
 // @access  Private (All authenticated roles)
 const getComplaintById = async (req, res, next) => {
   try {
-    const complaint = await Complaint.findById(req.params.id).populate('user', 'name email ph_no');
+    const complaint = await Complaint.findById(req.params.id).populate('userId', 'name email phone');
 
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
@@ -208,25 +208,25 @@ const getComplaintById = async (req, res, next) => {
 
     // Authorization checks:
     // Citizens can only view their own complaints
-    if (req.user.user_type === 'user' && complaint.user._id.toString() !== req.user.id) {
+    if (req.user.role === 'Ordinary' && complaint.userId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to view this complaint' });
     }
 
     // Agents can only view complaints assigned to them
-    if (req.user.user_type === 'agent') {
-      const assignment = await Assignment.findOne({ complaint_id: complaint._id, user_id: req.user.id });
+    if (req.user.role === 'Agent') {
+      const assignment = await AssignedComplaint.findOne({ complaintId: complaint._id, agentId: req.user.id });
       if (!assignment) {
         return res.status(403).json({ message: 'Not authorized to view this complaint (not assigned to you)' });
       }
     }
 
     // Look up assignment information
-    const assignment = await Assignment.findOne({ complaint_id: complaint._id }).populate('user_id', 'name email ph_no');
+    const assignment = await AssignedComplaint.findOne({ complaintId: complaint._id }).populate('agentId', 'name email phone');
     const compObj = complaint.toObject();
     if (assignment) {
       compObj.assignment = {
-        agentName: assignment.agent,
-        agentPhone: assignment.user_id ? assignment.user_id.ph_no : '',
+        agentName: assignment.agentName,
+        agentPhone: assignment.agentId ? assignment.agentId.phone : '',
         status: assignment.status,
       };
     } else {
@@ -253,15 +253,15 @@ const updateComplaintStatus = async (req, res, next) => {
 
     // Authorization checks:
     // If agent, verify they are assigned to this complaint
-    if (req.user.user_type === 'agent') {
-      const assignment = await Assignment.findOne({ complaint_id: complaint._id, user_id: req.user.id });
+    if (req.user.role === 'Agent') {
+      const assignment = await AssignedComplaint.findOne({ complaintId: complaint._id, agentId: req.user.id });
       if (!assignment) {
         return res.status(403).json({ message: 'Not authorized to update this complaint status' });
       }
     }
 
     // Allow Admins and assigned Agents to update
-    if (req.user.user_type !== 'admin' && req.user.user_type !== 'agent') {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Agent') {
       return res.status(403).json({ message: 'Unauthorized role' });
     }
 
@@ -270,7 +270,7 @@ const updateComplaintStatus = async (req, res, next) => {
 
     // If status is Resolved or Rejected, close assignment if it exists
     if (status === 'Resolved' || status === 'Rejected') {
-      const assignment = await Assignment.findOne({ complaint_id: complaint._id });
+      const assignment = await AssignedComplaint.findOne({ complaintId: complaint._id });
       if (assignment) {
         assignment.status = 'Closed';
         await assignment.save();
@@ -296,12 +296,12 @@ const getChatMessages = async (req, res, next) => {
       return res.status(404).json({ message: 'Complaint not found' });
     }
 
-    if (req.user.user_type === 'user' && complaint.user.toString() !== req.user.id) {
+    if (req.user.role === 'Ordinary' && complaint.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    if (req.user.user_type === 'agent') {
-      const assignment = await Assignment.findOne({ complaint_id: complaintId, user_id: req.user.id });
+    if (req.user.role === 'Agent') {
+      const assignment = await AssignedComplaint.findOne({ complaintId: complaintId, agentId: req.user.id });
       if (!assignment) {
         return res.status(403).json({ message: 'Unauthorized (not assigned)' });
       }
@@ -328,11 +328,11 @@ const sendChatMessage = async (req, res, next) => {
     }
 
     // Check authorization to post
-    if (req.user.user_type === 'user' && complaint.user.toString() !== req.user.id) {
+    if (req.user.role === 'Ordinary' && complaint.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
-    if (req.user.user_type === 'agent') {
-      const assignment = await Assignment.findOne({ complaint_id: complaintId, user_id: req.user.id });
+    if (req.user.role === 'Agent') {
+      const assignment = await AssignedComplaint.findOne({ complaintId: complaintId, agentId: req.user.id });
       if (!assignment) {
         return res.status(403).json({ message: 'Unauthorized' });
       }

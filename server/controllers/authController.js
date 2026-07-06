@@ -13,7 +13,7 @@ const generateToken = (id) => {
 // @access  Public
 const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password, ph_no, user_type } = req.body;
+    const { name, email, password, phone, role } = req.body;
 
     // Check if user already exists
     const userExists = await User.findOne({ email });
@@ -27,8 +27,8 @@ const registerUser = async (req, res, next) => {
       name,
       email,
       password,
-      ph_no,
-      user_type,
+      phone: Number(phone),
+      role: role || 'Ordinary',
     });
 
     if (user) {
@@ -36,8 +36,8 @@ const registerUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        ph_no: user.ph_no,
-        user_type: user.user_type,
+        phone: user.phone,
+        role: user.role,
         is_approved: user.is_approved,
         token: generateToken(user._id),
       });
@@ -71,7 +71,7 @@ const loginUser = async (req, res, next) => {
     }
 
     // Check if agent account is approved
-    if (user.user_type === 'agent' && !user.is_approved) {
+    if (user.role === 'Agent' && !user.is_approved) {
       return res.status(403).json({
         message: 'Your agent account is pending administrator approval.',
       });
@@ -81,8 +81,8 @@ const loginUser = async (req, res, next) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      ph_no: user.ph_no,
-      user_type: user.user_type,
+      phone: user.phone,
+      role: user.role,
       is_approved: user.is_approved,
       token: generateToken(user._id),
     });

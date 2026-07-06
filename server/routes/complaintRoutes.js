@@ -15,22 +15,22 @@ const {
 } = require('../controllers/complaintController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Citizens / Complainants
-router.post('/', protect, authorize('user'), lodgeComplaint);
-router.get('/my', protect, authorize('user'), getMyComplaints);
+// Citizens / Complainants (Ordinary users)
+router.post('/', protect, authorize('Ordinary'), lodgeComplaint);
+router.get('/my', protect, authorize('Ordinary'), getMyComplaints);
 
-// Agents / Officers
-router.get('/assigned', protect, authorize('agent'), getAssignedComplaints);
+// Agents / Officers (Agent users)
+router.get('/assigned', protect, authorize('Agent'), getAssignedComplaints);
 
-// Admins
-router.get('/', protect, authorize('admin'), getAllComplaints);
-router.post('/:id/assign', protect, authorize('admin'), assignComplaint);
-router.get('/admin/agents', protect, authorize('admin'), getAllAgents);
-router.put('/admin/agents/:id/approve', protect, authorize('admin'), approveAgent);
+// Admins (Admin users)
+router.get('/', protect, authorize('Admin'), getAllComplaints);
+router.post('/:id/assign', protect, authorize('Admin'), assignComplaint);
+router.get('/admin/agents', protect, authorize('Admin'), getAllAgents);
+router.put('/admin/agents/:id/approve', protect, authorize('Admin'), approveAgent);
 
-// Shared protected detail and chat routes
+// Shared protected detail and chat routes (All logged-in roles)
 router.get('/:id', protect, getComplaintById);
-router.put('/:id/status', protect, authorize('admin', 'agent'), updateComplaintStatus);
+router.put('/:id/status', protect, authorize('Admin', 'Agent'), updateComplaintStatus);
 router.get('/:id/messages', protect, getChatMessages);
 router.post('/:id/messages', protect, sendChatMessage);
 
