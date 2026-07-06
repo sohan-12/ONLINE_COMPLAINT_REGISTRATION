@@ -191,6 +191,18 @@ const approveAgent = async (req, res, next) => {
   }
 };
 
+// @desc    Get all users (Ordinary citizens)
+// @route   GET /api/complaints/admin/users
+// @access  Private (Admin)
+const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({ role: 'Ordinary' }).sort({ createdAt: -1 });
+    res.json({ success: true, count: users.length, data: users });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ==========================================
 // 🔄 SHARED CONTROLLER METHODS (Status, Detail, Chat)
 // ==========================================
@@ -364,6 +376,7 @@ module.exports = {
   assignComplaint,
   getAllAgents,
   approveAgent,
+  getAllUsers,
   getComplaintById,
   updateComplaintStatus,
   getChatMessages,

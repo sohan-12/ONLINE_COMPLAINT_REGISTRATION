@@ -8,6 +8,7 @@ const {
   assignComplaint,
   getAllAgents,
   approveAgent,
+  getAllUsers,
   getComplaintById,
   updateComplaintStatus,
   getChatMessages,
@@ -27,6 +28,7 @@ router.get('/', protect, authorize('Admin'), getAllComplaints);
 router.post('/:id/assign', protect, authorize('Admin'), assignComplaint);
 router.get('/admin/agents', protect, authorize('Admin'), getAllAgents);
 router.put('/admin/agents/:id/approve', protect, authorize('Admin'), approveAgent);
+router.get('/admin/users', protect, authorize('Admin'), getAllUsers);
 
 // Shared protected detail and chat routes (All logged-in roles)
 router.get('/:id', protect, getComplaintById);
