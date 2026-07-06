@@ -25,3 +25,4 @@ dist-ssr
 
 # Temporary Tunnel Scripts
 scratch_tunnel.js
+scratch_tunnel.cjs
