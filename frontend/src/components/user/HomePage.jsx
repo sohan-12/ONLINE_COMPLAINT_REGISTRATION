@@ -205,6 +205,41 @@ const HomePage = () => {
                   <MapPin size={14} style={{ color: 'var(--accent-primary)' }} />
                   <span>{comp.city}, {comp.state} ({comp.pincode})</span>
                 </div>
+
+                {/* Assigned Officer Status Badge */}
+                {comp.assignedAgent ? (
+                  <div style={{
+                    marginTop: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.82rem',
+                    color: 'var(--accent-primary)',
+                    background: 'rgba(0, 242, 254, 0.04)',
+                    border: '1px solid rgba(0, 242, 254, 0.1)',
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '8px',
+                    width: 'fit-content'
+                  }}>
+                    <span style={{ fontWeight: 800 }}>Assigned Officer:</span> {comp.assignedAgent.name}
+                  </div>
+                ) : (
+                  <div style={{
+                    marginTop: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-muted)',
+                    background: 'rgba(255, 255, 255, 0.01)',
+                    border: '1px dashed var(--border-glass)',
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '8px',
+                    width: 'fit-content'
+                  }}>
+                    <span style={{ fontWeight: 600 }}>Assigned Officer:</span> Awaiting Assignment
+                  </div>
+                )}
               </div>
 
               <div style={{

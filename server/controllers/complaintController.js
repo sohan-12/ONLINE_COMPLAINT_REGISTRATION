@@ -31,13 +31,31 @@ const lodgeComplaint = async (req, res, next) => {
   }
 };
 
-// @desc    Get all complaints lodged by the logged-in citizen
-// @route   GET /api/complaints/my
-// @access  Private (Ordinary)
 const getMyComplaints = async (req, res, next) => {
   try {
     const complaints = await Complaint.find({ userId: req.user.id }).sort({ createdAt: -1 });
-    res.json({ success: true, count: complaints.length, data: complaints });
+
+    // Look up assignments for each complaint
+    const complaintsWithAgents = await Promise.all(
+      complaints.map(async (comp) => {
+        const assignment = await AssignedComplaint.findOne({ complaintId: comp._id }).populate('agentId', 'name email phone');
+        const compObj = comp.toObject();
+        if (assignment) {
+          compObj.assignedAgent = {
+            id: assignment.agentId ? assignment.agentId._id : null,
+            name: assignment.agentName,
+            email: assignment.agentId ? assignment.agentId.email : '',
+            phone: assignment.agentId ? assignment.agentId.phone : '',
+            assignmentStatus: assignment.status,
+          };
+        } else {
+          compObj.assignedAgent = null;
+        }
+        return compObj;
+      })
+    );
+
+    res.json({ success: true, count: complaintsWithAgents.length, data: complaintsWithAgents });
   } catch (error) {
     next(error);
   }
