@@ -31,7 +31,7 @@ const ChatWindow = ({ complaintId }) => {
     fetchMessages();
 
     // 2. Setup socket connection
-    socketRef.current = io('http://localhost:5000');
+    socketRef.current = io('https://complaint-backend-qwim.onrender.com');
     
     // Join the specific room for this complaint
     socketRef.current.emit('join_room', complaintId);

@@ -4,7 +4,7 @@ import axios from 'axios';
 const AuthContext = createContext();
 
 // Base URL for API calls
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://complaint-backend-qwim.onrender.com/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
