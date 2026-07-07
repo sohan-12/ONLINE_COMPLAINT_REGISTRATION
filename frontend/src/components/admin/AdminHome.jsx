@@ -11,9 +11,25 @@ const AdminHome = () => {
   const [loading, setLoading] = useState(true);
   const [assigningId, setAssigningId] = useState(null);
   
+  // Search and Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  
   // Selected agent IDs map for each complaint (e.g. { complaintId: agentUserId })
   const [selectedAgentForComp, setSelectedAgentForComp] = useState({});
   const { API_URL } = useAuth();
+
+  const getPriority = (comment) => {
+    const text = (comment || '').toLowerCase();
+    if (text.includes('leakage') || text.includes('waste') || text.includes('garbage') || text.includes('unsafe') || text.includes('emergency')) {
+      return { label: 'High', color: '#ff4e50', bg: 'rgba(255, 78, 80, 0.1)' };
+    }
+    if (text.includes('power') || text.includes('electricity') || text.includes('broken')) {
+      return { label: 'Medium', color: '#f9d423', bg: 'rgba(249, 212, 35, 0.1)' };
+    }
+    return { label: 'Low', color: '#00f2fe', bg: 'rgba(0, 242, 254, 0.1)' };
+  };
 
   const fetchData = async () => {
     try {
@@ -105,6 +121,15 @@ const AdminHome = () => {
     progress: complaints.filter(c => c.status === 'In Progress').length,
     resolved: complaints.filter(c => c.status === 'Resolved').length,
   };
+
+  const filteredComplaints = complaints.filter(comp => {
+    const matchesSearch = comp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          comp.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          comp.city.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCity = cityFilter ? comp.city === cityFilter : true;
+    const matchesStatus = statusFilter ? comp.status === statusFilter : true;
+    return matchesSearch && matchesCity && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -203,18 +228,87 @@ const AdminHome = () => {
       </div>
 
       {/* Accordion List of all Complaints */}
-      <h2 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '2rem' }}>Complaints Database Queue</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0 }}>Complaints Database Queue</h2>
+        <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>Showing {filteredComplaints.length} of {complaints.length} tickets</span>
+      </div>
+
+      {/* Advanced search & filters panel */}
+      <div className="glass-card" style={{
+        display: 'flex',
+        gap: '1rem',
+        padding: '1.25rem',
+        marginBottom: '2rem',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        border: '1px solid var(--border-glass)',
+        background: 'rgba(255, 255, 255, 0.01)'
+      }}>
+        <div style={{ flex: 1, minWidth: '220px' }}>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="Search by name, city, or description..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ margin: 0, padding: '0.55rem 1rem', fontSize: '0.9rem' }}
+          />
+        </div>
+        <div style={{ width: '160px' }}>
+          <select
+            className="select-field"
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            style={{ margin: 0, padding: '0.55rem 1rem', fontSize: '0.9rem' }}
+          >
+            <option value="">All Cities</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Bangalore">Bangalore</option>
+            <option value="Pune">Pune</option>
+          </select>
+        </div>
+        <div style={{ width: '160px' }}>
+          <select
+            className="select-field"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ margin: 0, padding: '0.55rem 1rem', fontSize: '0.9rem' }}
+          >
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
       
-      {complaints.length === 0 ? (
+      {filteredComplaints.length === 0 ? (
         <div className="glass-card" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
-          No complaints registered in the system database yet.
+          {complaints.length === 0 ? 'No complaints registered in the system database yet.' : 'No complaints matches the search criteria.'}
         </div>
       ) : (
-        complaints.map((comp) => {
+        filteredComplaints.map((comp) => {
           const isPending = comp.status === 'Pending';
+          const priority = getPriority(comp.comment);
           const titleElement = (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <span>{comp.name} ({comp.city})</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <strong style={{ color: 'var(--text-main)' }}>{comp.name}</strong>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>({comp.city})</span>
+                <span style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  color: priority.color,
+                  background: priority.bg,
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '50px',
+                  border: `1px solid ${priority.color}22`,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.3px'
+                }}>{priority.label} Priority</span>
+              </span>
               {getStatusBadge(comp.status)}
             </div>
           );

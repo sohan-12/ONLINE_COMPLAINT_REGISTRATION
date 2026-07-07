@@ -191,6 +191,24 @@ const approveAgent = async (req, res, next) => {
   }
 };
 
+// @desc    Reject/Delete a pending agent account
+// @route   DELETE /api/complaints/admin/agents/:id/reject
+// @access  Private (Admin)
+const rejectAgent = async (req, res, next) => {
+  try {
+    const agent = await User.findById(req.params.id);
+    if (!agent || agent.role !== 'Agent') {
+      return res.status(404).json({ message: 'Agent not found' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Agent registration rejected and account deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get all users (Ordinary citizens)
 // @route   GET /api/complaints/admin/users
 // @access  Private (Admin)
@@ -376,6 +394,7 @@ module.exports = {
   assignComplaint,
   getAllAgents,
   approveAgent,
+  rejectAgent,
   getAllUsers,
   getComplaintById,
   updateComplaintStatus,

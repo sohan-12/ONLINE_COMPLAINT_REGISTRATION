@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, UserCheck, Shield, Award, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, UserCheck, Shield, Award, Phone, Mail, UserMinus } from 'lucide-react';
 
 const AgentInfo = () => {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState(null);
+  const [rejectingId, setRejectingId] = useState(null);
   const { API_URL } = useAuth();
 
   const fetchAgents = async () => {
@@ -50,6 +51,27 @@ const AgentInfo = () => {
       console.error('Error approving agent account', error);
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handleRejectAgent = async (agentId) => {
+    if (!window.confirm('Are you sure you want to reject and delete this agent application?')) return;
+    setRejectingId(agentId);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.delete(
+        `${API_URL}/complaints/admin/agents/${agentId}/reject`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        // Remove from list
+        setAgents(prev => prev.filter(agent => agent._id !== agentId));
+      }
+    } catch (error) {
+      console.error('Error rejecting agent account', error);
+    } finally {
+      setRejectingId(null);
     }
   };
 
@@ -140,16 +162,32 @@ const AgentInfo = () => {
               </div>
 
               {/* Action Buttons */}
-              <div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
                 {!agent.is_approved ? (
-                  <button
-                    onClick={() => handleApproveAgent(agent._id)}
-                    className="btn-primary"
-                    style={{ padding: '0.55rem 1.25rem', fontSize: '0.88rem' }}
-                    disabled={approvingId === agent._id}
-                  >
-                    <UserCheck size={16} /> {approvingId === agent._id ? 'Approving...' : 'Approve Agent'}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleApproveAgent(agent._id)}
+                      className="btn-primary"
+                      style={{ padding: '0.55rem 1.25rem', fontSize: '0.88rem' }}
+                      disabled={approvingId === agent._id || rejectingId === agent._id}
+                    >
+                      <UserCheck size={16} /> {approvingId === agent._id ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectAgent(agent._id)}
+                      className="btn-secondary"
+                      style={{
+                        padding: '0.55rem 1.25rem',
+                        fontSize: '0.88rem',
+                        borderColor: '#ff4e50',
+                        color: '#ff4e50',
+                        background: 'rgba(255, 78, 80, 0.05)'
+                      }}
+                      disabled={approvingId === agent._id || rejectingId === agent._id}
+                    >
+                      <UserMinus size={16} /> {rejectingId === agent._id ? 'Rejecting...' : 'Reject'}
+                    </button>
+                  </>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#00ff87', fontWeight: 700, fontSize: '0.9rem' }}>
                     <Award size={18} /> Verified Official
