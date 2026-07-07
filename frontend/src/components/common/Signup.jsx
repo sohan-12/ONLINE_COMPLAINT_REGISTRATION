@@ -176,7 +176,6 @@ const Signup = () => {
               >
                 <option value="Ordinary">Ordinary (Citizen)</option>
                 <option value="Agent">Agent (Officer)</option>
-                <option value="Admin">Admin (Official)</option>
               </select>
             </div>
           </div>
