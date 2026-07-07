@@ -22,7 +22,7 @@ import AgentInfo from './components/admin/AgentInfo';
 import UserInfo from './components/admin/UserInfo';
 
 // Import Icons
-import { LogOut, Home as HomeIcon, FileText, UserCheck, ShieldAlert, Users } from 'lucide-react';
+import { LogOut, Home as HomeIcon, FileText, UserCheck, Shield, Users } from 'lucide-react';
 
 // Route protection guard
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -82,7 +82,7 @@ const Navbar = () => {
             fontWeight: '700',
             transition: 'var(--transition)'
           }}>
-            <ShieldAlert size={14} /> Admin Portal
+            <Shield size={14} /> Admin Portal
           </Link>
         </li>
         
@@ -105,7 +105,7 @@ const Navbar = () => {
             {user.role === 'Admin' && (
               <li>
                 <Link to="/admin" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <ShieldAlert size={16} /> Admin panel
+                  <Shield size={16} /> Admin panel
                 </Link>
               </li>
             )}

@@ -37,7 +37,7 @@ const AdminHome = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const complaintsRes = await axios.get(`${API_URL}/complaints`, { headers });
-      const agentsRes = await axios.get(`${API_URL}/admin/agents`, { headers });
+      const agentsRes = await axios.get(`${API_URL}/complaints/admin/agents`, { headers });
 
       if (complaintsRes.data.success) {
         setComplaints(complaintsRes.data.data);
